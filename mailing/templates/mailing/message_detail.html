@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Просмотр сообщения{% endblock %}
+{% block content %}
+<h2>Сообщение: {{ object.subject }}</h2>
+<p>{{ object.body }}</p>
+<a href="{% url 'message_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
+<a href="{% url 'message_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+<a href="{% url 'message_list' %}" class="btn btn-secondary">Назад</a>
+{% endblock %}
