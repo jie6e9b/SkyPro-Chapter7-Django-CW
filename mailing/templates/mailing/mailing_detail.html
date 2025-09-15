@@ -14,6 +14,7 @@
         <li>Получателей нет</li>
     {% endfor %}
 </ul>
+<a href="{% url 'mailing_send' object.pk %}" class="btn btn-primary">Отправить рассылку</a>
 <a href="{% url 'mailing_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
 <a href="{% url 'mailing_delete' object.pk %}" class="btn btn-danger">Удалить</a>
 <a href="{% url 'mailing_list' %}" class="btn btn-secondary">Назад</a>

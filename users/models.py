@@ -9,7 +9,6 @@ from django.utils.translation import gettext_lazy as _
 class User(AbstractUser):
     # username остаётся как в AbstractUser
     email = models.EmailField(_("email address"), unique=True)
-
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Телефон")
     city = models.CharField(max_length=100, blank=True, null=True, verbose_name="Город")
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True, verbose_name="Аватар")

@@ -11,12 +11,14 @@ from .views import (
     MailingDeleteView,
     MailingDetailView,
     MailingListView,
+    MailingSendView,
     MailingUpdateView,
     MessageCreateView,
     MessageDeleteView,
     MessageDetailView,
     MessageListView,
     MessageUpdateView,
+    StatsView,
 )
 
 urlpatterns = [
@@ -38,6 +40,9 @@ urlpatterns = [
     path("mailings/<int:pk>/", MailingDetailView.as_view(), name="mailing_detail"),
     path("mailings/<int:pk>/edit/", MailingUpdateView.as_view(), name="mailing_edit"),
     path("mailings/<int:pk>/delete/", MailingDeleteView.as_view(), name="mailing_delete"),
+    path("mailings/<int:pk>/send/", MailingSendView.as_view(), name="mailing_send"),
     # Попытки (только просмотр)
     path("attempts/", AttemptListView.as_view(), name="attempt_list"),
+    # Статистика по рассылкам
+    path("stats/", StatsView.as_view(), name="stats"),
 ]
