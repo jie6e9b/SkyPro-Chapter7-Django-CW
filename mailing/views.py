@@ -7,9 +7,10 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.cache import cache_control, cache_page
+from django.views.decorators.cache import cache_control
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
+from .mixins import ManagerOrOwnerMixin
 from .models import Attempt, Client, Mailing, Message
 
 
@@ -25,7 +26,6 @@ class IndexView(TemplateView):
         return context
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class ClientListView(LoginRequiredMixin, ListView):
     model = Client
     template_name = "mailing/client_list.html"
@@ -38,19 +38,13 @@ class ClientListView(LoginRequiredMixin, ListView):
         return Client.objects.filter(owner=user)
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
-class ClientDetailView(LoginRequiredMixin, DetailView):
+# Используем ManagerOrOwnerMixin вместо ручной проверки в get_queryset
+class ClientDetailView(LoginRequiredMixin, ManagerOrOwnerMixin, DetailView):
     model = Client
     template_name = "mailing/client_detail.html"
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.groups.filter(name="Managers").exists():
-            return Client.objects.all()
-        return Client.objects.filter(owner=user)
 
-
-class ClientCreateView(CreateView):
+class ClientCreateView(LoginRequiredMixin, CreateView):
     model = Client
     template_name = "mailing/client_form.html"
     fields = ["email", "full_name", "comment"]
@@ -61,36 +55,25 @@ class ClientCreateView(CreateView):
         return super().form_valid(form)
 
 
-class ClientUpdateView(LoginRequiredMixin, UpdateView):
+# Используем ManagerOrOwnerMixin
+class ClientUpdateView(LoginRequiredMixin, ManagerOrOwnerMixin, UpdateView):
     model = Client
     fields = ["email", "full_name", "comment"]
     template_name = "mailing/client_form.html"
     success_url = reverse_lazy("client_list")
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.groups.filter(name="Managers").exists():
-            return Client.objects.all()
-        return Client.objects.filter(owner=user)
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
 
-class ClientDeleteView(LoginRequiredMixin, DeleteView):
+# Используем ManagerOrOwnerMixin
+class ClientDeleteView(LoginRequiredMixin, ManagerOrOwnerMixin, DeleteView):
     model = Client
     template_name = "mailing/client_confirm_delete.html"
     success_url = reverse_lazy("client_list")
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.groups.filter(name="Managers").exists():
-            return Client.objects.all()
-        return Client.objects.filter(owner=user)
 
-
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class MessageListView(LoginRequiredMixin, ListView):
     model = Message
     template_name = "mailing/message_list.html"
@@ -103,13 +86,13 @@ class MessageListView(LoginRequiredMixin, ListView):
         return Message.objects.filter(owner=user)
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
-class MessageDetailView(DetailView):
+# Используем ManagerOrOwnerMixin
+class MessageDetailView(LoginRequiredMixin, ManagerOrOwnerMixin, DetailView):
     model = Message
     template_name = "mailing/message_detail.html"
 
 
-class MessageCreateView(CreateView):
+class MessageCreateView(LoginRequiredMixin, CreateView):
     model = Message
     fields = ["subject", "message"]
     template_name = "mailing/message_form.html"
@@ -120,7 +103,8 @@ class MessageCreateView(CreateView):
         return super().form_valid(form)
 
 
-class MessageUpdateView(UpdateView):
+# Используем ManagerOrOwnerMixin
+class MessageUpdateView(LoginRequiredMixin, ManagerOrOwnerMixin, UpdateView):
     model = Message
     fields = ["subject", "message"]
     template_name = "mailing/message_form.html"
@@ -131,13 +115,13 @@ class MessageUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-class MessageDeleteView(DeleteView):
+# Используем ManagerOrOwnerMixin
+class MessageDeleteView(LoginRequiredMixin, ManagerOrOwnerMixin, DeleteView):
     model = Message
     template_name = "mailing/message_confirm_delete.html"
     success_url = reverse_lazy("message_list")
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class MailingListView(LoginRequiredMixin, ListView):
     model = Mailing
     template_name = "mailing/mailing_list.html"
@@ -150,44 +134,69 @@ class MailingListView(LoginRequiredMixin, ListView):
         return Mailing.objects.filter(owner=user)
 
 
-class MailingDetailView(DetailView):
+# Используем ManagerOrOwnerMixin
+class MailingDetailView(LoginRequiredMixin, ManagerOrOwnerMixin, DetailView):
     model = Mailing
     template_name = "mailing/mailing_detail.html"
 
 
 class MailingCreateView(LoginRequiredMixin, CreateView):
     model = Mailing
-    fields = ["message", "clients"]  # ❌ без start_time, end_time, status
+    fields = ["message", "clients"]
     template_name = "mailing/mailing_form.html"
     success_url = reverse_lazy("mailing_list")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        form.instance.status = "created"  # всегда при создании
+        form.instance.status = "created"
         return super().form_valid(form)
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        form.fields["message"].queryset = Message.objects.filter(owner=user)
+        form.fields["clients"].queryset = Client.objects.filter(owner=user)
+        return form
 
-class MailingUpdateView(LoginRequiredMixin, UpdateView):
+
+# Используем ManagerOrOwnerMixin
+class MailingUpdateView(LoginRequiredMixin, ManagerOrOwnerMixin, UpdateView):
     model = Mailing
-    fields = ["message", "clients"]  # ❌ без start_time, end_time, status
+    fields = ["message", "clients"]
     template_name = "mailing/mailing_form.html"
     success_url = reverse_lazy("mailing_list")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        form.instance.status = "created"  # всегда при создании
+        form.instance.status = "created"
         return super().form_valid(form)
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user = self.request.user
+        form.fields["message"].queryset = Message.objects.filter(owner=user)
+        form.fields["clients"].queryset = Client.objects.filter(owner=user)
+        return form
 
-class MailingDeleteView(DeleteView):
+
+# Используем ManagerOrOwnerMixin
+class MailingDeleteView(LoginRequiredMixin, ManagerOrOwnerMixin, DeleteView):
     model = Mailing
     template_name = "mailing/mailing_confirm_delete.html"
     success_url = reverse_lazy("mailing_list")
 
 
-class MailingSendView(View):
+# Используем ManagerOrOwnerMixin для проверки доступа к рассылке
+class MailingSendView(LoginRequiredMixin, ManagerOrOwnerMixin, View):
+    model = Mailing  # Добавляем модель для работы миксина
+
+    def get_object(self):
+        # Переопределяем для получения объекта по pk из URL
+        return get_object_or_404(self.model, pk=self.kwargs["pk"])
+
     def get(self, request, pk):
-        mailing = get_object_or_404(Mailing, pk=pk)
+        # Теперь миксин автоматически проверит права доступа
+        mailing = self.get_object()
 
         if mailing.status == "created":
             mailing.start_time = timezone.now()
@@ -199,7 +208,7 @@ class MailingSendView(View):
                 send_mail(
                     subject=mailing.message.subject,
                     message=mailing.message.message,
-                    from_email=None,  # возьмётся DEFAULT_FROM_EMAIL
+                    from_email=None,
                     recipient_list=[client.email],
                     fail_silently=False,
                 )
@@ -212,10 +221,6 @@ class MailingSendView(View):
                     mailing=mailing, status="failed", server_response=str(e), attempt_time=timezone.now()
                 )
 
-        mailing.status = "started"
-        mailing.save()
-
-        # после завершения → фиксируем end_time
         mailing.end_time = timezone.now()
         mailing.status = "finished"
         mailing.save()
@@ -224,31 +229,32 @@ class MailingSendView(View):
         return redirect("mailing_detail", pk=mailing.pk)
 
 
-class AttemptListView(ListView):
+class AttemptListView(LoginRequiredMixin, ListView):
     model = Attempt
     template_name = "mailing/attempt_list.html"
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name="Managers").exists():
+            return Attempt.objects.all()
+        return Attempt.objects.filter(mailing__owner=user)
 
-class StatsView(TemplateView):
+
+class StatsView(LoginRequiredMixin, TemplateView):
     template_name = "mailing/stats.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        # Все рассылки пользователя
         mailings = Mailing.objects.filter(owner=user)
-
-        # Общее количество рассылок
         total_mailings = mailings.count()
 
-        # Количество успешных и неуспешных попыток
         attempts = Attempt.objects.filter(mailing__owner=user)
         stats_attempts = attempts.aggregate(
             success_count=Count("id", filter=Q(status="success")), failed_count=Count("id", filter=Q(status="failed"))
         )
 
-        # Количество сообщений (одно сообщение может быть в нескольких рассылках):
         unique_messages = mailings.values("message").distinct().count()
 
         context.update(

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load permissions %}
 {% block title %}Просмотр рассылки{% endblock %}
 {% block content %}
 <h2>Рассылка ID: {{ object.id }}</h2>
@@ -14,8 +15,10 @@
         <li>Получателей нет</li>
     {% endfor %}
 </ul>
-<a href="{% url 'mailing_send' object.pk %}" class="btn btn-primary">Отправить рассылку</a>
-<a href="{% url 'mailing_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
-<a href="{% url 'mailing_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+{% if object|can_edit_object:user %}
+    <a href="{% url 'mailing_send' object.pk %}" class="btn btn-primary">Отправить рассылку</a>
+    <a href="{% url 'mailing_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
+    <a href="{% url 'mailing_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+{% endif %}
 <a href="{% url 'mailing_list' %}" class="btn btn-secondary">Назад</a>
 {% endblock %}

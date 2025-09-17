@@ -1,9 +1,12 @@
 {% extends "base.html" %}
+{% load permissions %}
 {% block title %}Просмотр сообщения{% endblock %}
 {% block content %}
 <h2>Сообщение: {{ object.subject }}</h2>
-<p>{{ object.body }}</p>
-<a href="{% url 'message_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
-<a href="{% url 'message_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+<p>{{ object.message }}</p>
+{% if object|can_edit_object:user %}
+    <a href="{% url 'message_edit' object.pk %}" class="btn btn-warning">Редактировать</a>
+    <a href="{% url 'message_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+{% endif %}
 <a href="{% url 'message_list' %}" class="btn btn-secondary">Назад</a>
 {% endblock %}

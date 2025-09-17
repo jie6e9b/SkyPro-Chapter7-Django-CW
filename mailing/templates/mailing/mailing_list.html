@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load permissions %}
 {% block title %}Рассылки{% endblock %}
 {% block content %}
 <h2>Рассылки</h2>
@@ -22,8 +23,10 @@
             <td>{{ mailing.end_time }}</td>
             <td>
                 <a href="{% url 'mailing_detail' mailing.pk %}" class="btn btn-info btn-sm">Просмотр</a>
-                <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning btn-sm">Редактировать</a>
-                <a href="{% url 'mailing_delete' mailing.pk %}" class="btn btn-danger btn-sm">Удалить</a>
+                {% if mailing|can_edit_object:user %}
+                    <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning btn-sm">Редактировать</a>
+                    <a href="{% url 'mailing_delete' mailing.pk %}" class="btn btn-danger btn-sm">Удалить</a>
+                {% endif %}
             </td>
         </tr>
         {% empty %}
