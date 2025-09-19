@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Мои клиенты</h2>
+            
+            {% if user.is_authenticated %}
+                <a href="{% url 'client_create' %}" class="btn btn-primary mb-3">
+                    Добавить клиента
+                </a>
+            {% endif %}
+            
+            <div class="row">
+                {% for client in clients %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ client.full_name }}</h5>
+                                <p class="card-text">
+                                    <strong>Email:</strong> {{ client.email }}<br>
+                                    {% if client.comment %}
+                                        <strong>Комментарий:</strong> {{ client.comment }}
+                                    {% endif %}
+                                </p>
+                                
+                                {% if user.is_authenticated %}
+                                    {% if client|can_edit_object:user %}
+                                        <a href="{% url 'client_detail' client.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">Подробнее</a>
+                                        <a href="{% url 'client_edit' client.pk %}" 
+                                           class="btn btn-sm btn-outline-warning">Редактировать</a>
+                                        <a href="{% url 'client_delete' client.pk %}" 
+                                           class="btn btn-sm btn-outline-danger">Удалить</a>
+                                    {% else %}
+                                        <span class="text-muted">Нет доступа</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            У вас пока нет клиентов.
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'client_create' %}">Создать первого клиента</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

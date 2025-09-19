@@ -1,0 +1,51 @@
+[project]
+name = "skypro-chapter7-django-cw"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "jie6e9b",email = "lvv1985@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django (>=5.2.6,<6.0.0)",
+    "psycopg2-binary (>=2.9.10,<3.0.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)",
+    "pillow (>=11.3.0,<12.0.0)",
+    "flake8 (>=7.3.0,<8.0.0)",
+    "django-redis (>=6.0.0,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+flake8 = "^7.3.0"
+isort = "^6.0.1"
+pre-commit = "^4.3.0"
+pytest-django = "^4.11.1"
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = [
+    "E203",  # конфликтует с black
+    "W503"   # конфликтует с PEP8 (line break before binary operator)
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "migrations",  # миграции Django можно не проверять
+    "manage.py"    # по желанию
+]
